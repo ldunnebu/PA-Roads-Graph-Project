@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::prelude::*;
-use rand::Rng;
+use rayon::prelude::*;
 
 type Vertex = usize;
 pub type ListOfEdges = Vec<(Vertex, Vertex)>;
@@ -20,10 +20,18 @@ impl Graph {
     }
 
     pub fn sort_graph_lists(&mut self) {
+        self.outedges.par_iter_mut().for_each(|list| {
+            list.sort();
+        });
+    }
+
+    /* parallel running to try and speed it up because it is taking really long to run
+    pub fn sort_graph_lists(&mut self) {
         for l in self.outedges.iter_mut() {
             l.sort();
         }
     }
+    */
 
     pub fn reverse_edges(list:&ListOfEdges) -> ListOfEdges {
         let mut new_list = vec![];
@@ -35,7 +43,8 @@ impl Graph {
 
     pub fn create_undirected(n: usize, edges: &ListOfEdges) -> Graph {
         let mut g = Self::create_directed(n, edges);
-        g.add_directed_edges(&Graph::reverse_edges(edges));
+        let reversed_edges = Graph::reverse_edges(edges);
+        g.add_directed_edges(&reversed_edges);
         g.sort_graph_lists();
         g
     }
@@ -68,33 +77,4 @@ pub fn read_graph(path: &str) -> (usize, ListOfEdges) {
         }  
     } 
     return (n, result);
-}
-
-//page rank
-pub fn pagerank(g: &Graph) -> Vec<usize> {
-    let mut counts = vec![0_usize; g.n];
-    for i in 0..(g.n){ //verticies
-        for _ in 0..100 { //100 walks
-            let mut current = i;
-            for _ in 0..100 { //100 steps
-                let random_select = rand::thread_rng().gen_range(0..10);
-                if g.outedges[current].len() == 0 || random_select == 1 {
-                    current = rand::thread_rng().gen_range(0..(g.n)); //random vertex
-                }
-                else {
-                    let new_index = rand::thread_rng().gen_range(0..g.outedges[current].len()); //neighboring vertex
-                    current = g.outedges[current][new_index];
-                }
-            }
-            counts[current] += 1; //number of terminations at each vertex
-        }
-    }   
-    let mut counts_i: Vec<(usize, &usize)> = counts.iter().enumerate().collect();
-    counts_i.sort_by_key(|&(_, v)| std::cmp::Reverse(v));
-    let length = std::cmp::min(5, counts.len());
-    for (index, value) in counts_i.iter().take(length) {
-        let estimated_rank: f32 = (*(*value) as f32) / (100.0 * (g.n as f32));
-        println!("vertex {}: approximate PageRank {}", index, estimated_rank)
-    }
-    return counts;
 }
