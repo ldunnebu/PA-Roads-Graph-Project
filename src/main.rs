@@ -1,130 +1,67 @@
 mod graph_reader;
 mod distances;
-
-//mod pagerank_testofdata;
-//use pagerank_testofdata::pagerank;
+mod bfs_sample;
 
 use graph_reader::{Graph, read_graph};
-use distances::avg_shortest;
-use rand::distributions::{Distribution, Uniform};
-use std::time::Instant;
-use std::collections::HashSet;
+use crate::bfs_sample::bfs_sample;
 
 fn main() {
-    //let start = Instant::now();
     let (n, edges) = read_graph("C:/Users/ldunn/DS210/project/code/src/PA_Roads.txt");
     let graph = Graph::create_undirected(n, &edges);
-    //let graph_creation_time = start.elapsed();
-    //println!("Time taken to create graph: {:?}", graph_creation_time); takes just under a second using cargo run, about half a second using --release
-
-    /*after running the original code with timer and updates, I estimated with the given times that it 
-    would take over 8 hours. That being the case, I have taken a random sample of 50,000 vertices of 
-    the 1,000,000+ in the dataset*/
-    
-    let mut rng = rand::thread_rng();
-    let between = Uniform::new(0, n);
-    let mut sample = HashSet::new();
-    for _ in 0..n {
-        let random_vertex = between.sample(&mut rng);
-        sample.insert(random_vertex);
-    }
-
-    let start_time = Instant::now();
-    let mut av_dist = 0.0;
-    let mut count = 0.0;
-
-    /*for &start in sample.iter() {
-        let average_length = avg_shortest(&graph, start);
-        av_dist += average_length;
-        count += 1.0;
-        if (count as usize) % 1000 == 0 {
-            let current = start_time.elapsed();
-            println!("Average shortest path length from vertex {} is {:.4}, with time taken for {:?} vertices = {:?}", start, average_length, (count as isize), current);
-        }
-    }*/
-
-    for u in sample.iter() {
-        if count == 50000.0 {
-            break;
-        }
-        else {
-            let average_length = avg_shortest(&graph, *u);
-            if average_length == 0.0 {
-                continue;
-            } 
-            else {
-                av_dist += average_length;
-                count += 1.0;
-                if (count as usize) % 10000 == 0 {
-                    let current = start_time.elapsed();
-                    println!("Average shortest path length from vertex {} is {:.4}, with time taken for {:?} vertices = {:?}", u, average_length, (count as isize), current);
-                }
-            }
-        }
-    }
-    /*
-    for u in sample.iter() {
-        let average_length = avg_shortest(&graph, *u);
-        if average_length == 0.0 {
-            continue;
-        } 
-        else {
-            av_dist += average_length;
-            count += 1.0;
-            if (count as usize) % 10000 == 0 {
-                let current = start_time.elapsed();
-                println!("Average shortest path length from vertex {} is {:.4}, with time taken for {:?} vertices = {:?}", u, average_length, (count as isize), current);
-            }
-        }
-    }
-    */
-
-    /*for u in 0..n {
-        let average_length = avg_shortest(&graph, u);
-        if average_length == 0.0 {
-            continue;
-        } 
-        else {
-            av_dist += average_length;
-            count += 1.0;
-            if (count as usize) % 10000 == 0 {
-                let current = start_time.elapsed();
-                println!("Average shortest path length from vertex {} is {:.4}, with time taken for {:?} vertices = {:?}", u, average_length, (count as isize), current);
-            }
-        }
-        
-    }*/
-
-    let overall_average = av_dist / count as f64;
-    println!("Overall average shortest path length for {:?} vertices: {:.4}", count as isize, overall_average);
-    println!("Computation time: {:?}", start_time.elapsed()); 
+    bfs_sample(&graph, 50000, n);
 }
 
-// in main
-    //let start_vertex = 0;
-    //let average_length = graph.avg_shortest(start_vertex);
-    //println!("Average shortest path length from vertex {} is {}", start_vertex, average_length);
-/* 
-    testing data to see if I have read it correctly using prewritten page rank function 
-    from homework - tested the time that it took to run just in case my graph creation wasn't 
-    the part slowing down the code
 
-    let start = Instant::now();
-    pagerank(&graph);
-    let pagerank_time = start.elapsed();
-    println!("Time taken for PageRank: {:?}", pagerank_time);
+//tests
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::distances::avg_shortest;
 
+    #[test]
+    fn graph_creation() {
+        let (n, edges) = read_graph("C:/Users/ldunn/DS210/project/code/src/project_test.txt");
+        let graph = Graph::create_undirected(n, &edges);
 
-DATA
-    Nodes	1088092
-    Edges	1541898
-    Nodes in largest WCC	1087562 (1.000)
-    Edges in largest WCC	1541514 (1.000)
-    Nodes in largest SCC	1087562 (1.000)
-    Edges in largest SCC	1541514 (1.000)
-    Average clustering coefficient	0.0465
-    Number of triangles	67150
-    Fraction of closed triangles	0.02062
-    Diameter (longest shortest path)	786
-    90-percentile effective diameter	5.3e+02
-*/
+        assert_eq!(n, 4);  //graph has 4 nodes
+        assert_eq!(graph.outedges.len(), 4);
+        assert!(graph.outedges[0].contains(&1)); //node 1 is from 0-1
+        assert!(graph.outedges[1].contains(&0)); //show undirectedness
+    }
+
+    #[test]
+    fn test_avg_shortest() {
+        let edges = vec![(0, 1), (1, 2), (2, 3)];
+        let graph = Graph::create_undirected(4, &edges); //4 nodes 0,1,2,3
+        let (avg_distance, _, _, _, _) = avg_shortest(&graph, 0);
+
+        assert_eq!(avg_distance, 2.0);  //average distance from node 0 to others is 1+2+3/3
+    }
+
+    #[test]
+    fn min_length() {
+        let edges = vec![(0, 1), (1, 2), (2, 3)];
+        let graph = Graph::create_undirected(4, &edges); //4 nodes 0,1,2,3
+        let (_, _, _, min_length, _) = avg_shortest(&graph, 0);
+
+        assert_eq!(min_length, 1);
+    }
+
+    #[test]
+    fn avg_shortest_no_connect() {
+        let edges = vec![(0, 1)]; 
+        let graph = Graph::create_undirected(3, &edges); //Nodes 0, 1, 2 - 2 has no edges
+        let (avg_distance, _, _, _, _) = avg_shortest(&graph, 2);
+
+        assert_eq!(avg_distance, 0.0);  //therefore, distance to 2 is 0 because it doesn't exist
+    }
+
+    #[test]
+    fn test_stats() {
+        let edges = vec![(0, 1), (1, 2), (2, 3)];
+        let graph = Graph::create_undirected(4, &edges); //4 nodes 0,1,2,3
+        let (_, _, max_path, _, _) = avg_shortest(&graph, 0);
+
+        assert_eq!(max_path.unwrap(), (0,3));
+    }
+}

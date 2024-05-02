@@ -21,19 +21,11 @@ impl Graph {
         }
     }
 
-    pub fn sort_graph_lists(&mut self) {
+    pub fn sort_graph_lists(&mut self) { // parallel running to try and speed it up because it is taking really long to run
         self.outedges.iter_mut().for_each(|list| {
             list.sort();
         });
     }
-    
-    /* parallel running to try and speed it up because it is taking really long to run
-    pub fn sort_graph_lists(&mut self) {
-        for l in self.outedges.iter_mut() {
-            l.sort();
-        }
-    }
-    */
 
     pub fn reverse_edges(list: &ListOfEdges) -> ListOfEdges {
         list.iter().map(|(u, v)| (*v, *u)).collect()
