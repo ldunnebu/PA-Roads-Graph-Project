@@ -8,6 +8,7 @@ use graph_reader::{Graph, read_graph};
 use distances::avg_shortest;
 use rand::distributions::{Distribution, Uniform};
 use std::time::Instant;
+use std::collections::HashSet;
 
 fn main() {
     //let start = Instant::now();
@@ -17,20 +18,22 @@ fn main() {
     //println!("Time taken to create graph: {:?}", graph_creation_time); takes just under a second using cargo run, about half a second using --release
 
     /*after running the original code with timer and updates, I estimated with the given times that it 
-    would take over 8 hours. That being the case, I have taken a random sample of 10,000 vertices of 
+    would take over 8 hours. That being the case, I have taken a random sample of 50,000 vertices of 
     the 1,000,000+ in the dataset*/
+    
     let mut rng = rand::thread_rng();
     let between = Uniform::new(0, n);
-    let mut sample = std::collections::HashSet::new();
-    for _ in 0..10000 {
-        sample.insert(between.sample(&mut rng));
+    let mut sample = HashSet::new();
+    for _ in 0..n {
+        let random_vertex = between.sample(&mut rng);
+        sample.insert(random_vertex);
     }
 
     let start_time = Instant::now();
     let mut av_dist = 0.0;
     let mut count = 0.0;
 
-    for &start in sample.iter() {
+    /*for &start in sample.iter() {
         let average_length = avg_shortest(&graph, start);
         av_dist += average_length;
         count += 1.0;
@@ -38,10 +41,62 @@ fn main() {
             let current = start_time.elapsed();
             println!("Average shortest path length from vertex {} is {:.4}, with time taken for {:?} vertices = {:?}", start, average_length, (count as isize), current);
         }
+    }*/
+
+    for u in sample.iter() {
+        if count == 50000.0 {
+            break;
+        }
+        else {
+            let average_length = avg_shortest(&graph, *u);
+            if average_length == 0.0 {
+                continue;
+            } 
+            else {
+                av_dist += average_length;
+                count += 1.0;
+                if (count as usize) % 10000 == 0 {
+                    let current = start_time.elapsed();
+                    println!("Average shortest path length from vertex {} is {:.4}, with time taken for {:?} vertices = {:?}", u, average_length, (count as isize), current);
+                }
+            }
+        }
     }
+    /*
+    for u in sample.iter() {
+        let average_length = avg_shortest(&graph, *u);
+        if average_length == 0.0 {
+            continue;
+        } 
+        else {
+            av_dist += average_length;
+            count += 1.0;
+            if (count as usize) % 10000 == 0 {
+                let current = start_time.elapsed();
+                println!("Average shortest path length from vertex {} is {:.4}, with time taken for {:?} vertices = {:?}", u, average_length, (count as isize), current);
+            }
+        }
+    }
+    */
+
+    /*for u in 0..n {
+        let average_length = avg_shortest(&graph, u);
+        if average_length == 0.0 {
+            continue;
+        } 
+        else {
+            av_dist += average_length;
+            count += 1.0;
+            if (count as usize) % 10000 == 0 {
+                let current = start_time.elapsed();
+                println!("Average shortest path length from vertex {} is {:.4}, with time taken for {:?} vertices = {:?}", u, average_length, (count as isize), current);
+            }
+        }
+        
+    }*/
 
     let overall_average = av_dist / count as f64;
-    println!("Overall average shortest path length for 1000 vertices: {:.4}", overall_average);
+    println!("Overall average shortest path length for {:?} vertices: {:.4}", count, overall_average);
     println!("Computation time: {:?}", start_time.elapsed()); 
 }
 
