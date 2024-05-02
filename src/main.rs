@@ -96,7 +96,7 @@ fn main() {
     }*/
 
     let overall_average = av_dist / count as f64;
-    println!("Overall average shortest path length for {:?} vertices: {:.4}", count, overall_average);
+    println!("Overall average shortest path length for {:?} vertices: {:.4}", count as isize, overall_average);
     println!("Computation time: {:?}", start_time.elapsed()); 
 }
 
