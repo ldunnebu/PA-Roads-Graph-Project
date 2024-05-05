@@ -6,7 +6,7 @@ use graph_reader::{Graph, read_graph};
 use crate::bfs_sample::bfs_sample;
 
 fn main() {
-    let (n, edges) = read_graph("C:/Users/ldunn/DS210/project/code/src/PA_Roads.txt");
+    let (n, edges) = read_graph("src/PA_Roads.txt");
     let graph = Graph::create_undirected(n, &edges);
     bfs_sample(&graph, 50000, n);
 }
